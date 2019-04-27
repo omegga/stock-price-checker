@@ -13,11 +13,13 @@ var fccTestingRoutes  = require('./routes/fcctesting.js');
 var runner            = require('./test-runner');
 
 
-if (!process.env.CACHE_TIMEOUT || ! process.env.API_KEY || !process.env.DB) {
+if (!process.env.CACHE_TIMEOUT || ! process.env.API_KEY || !process.env.DB || !process.env.PROXY) {
   console.error('missing environment variables');
   process.exit(1);
 }
 var app = express();
+
+app.set('trust proxy', process.env.PROXY === 'true');
 
 app.use(helmet.contentSecurityPolicy({
   directives: {
@@ -27,7 +29,7 @@ app.use(helmet.contentSecurityPolicy({
   }
 }));
 app.use((req, res, next) => {
-  console.log(req.method, req.url);
+  console.log(req.method, req.url, req.ip);
   next();
 });
 app.use('/public', express.static(process.cwd() + '/public'));
