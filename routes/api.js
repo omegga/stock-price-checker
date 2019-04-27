@@ -12,6 +12,8 @@ var expect = require('chai').expect;
 var MongoClient = require('mongodb');
 const https = require('https');
 
+const stockPricesCache = {};
+
 function getUrl(symbol) {
   return `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${process.env.API_KEY}`;
 }
@@ -19,6 +21,10 @@ function getUrl(symbol) {
 function getStockPrice(symbol) {
   const url = getUrl(symbol);
   let data = '';
+  // Use cache when necessary to avoid api limitations (maximum of 5 request/minute)
+  if (stockPricesCache[symbol] && stockPricesCache[symbol].timeOfRequest > Date.now() - process.env.CACHE_TIMEOUT) {
+    return Promise.resolve(stockPricesCache[symbol].value);
+  }
   return new Promise((resolve, reject) => {
     https.get(url, res => {
       res.on('data', chunk => {
@@ -30,6 +36,10 @@ function getStockPrice(symbol) {
           return reject('err');
         }
         const price = data['Global Quote']['05. price'];
+        stockPricesCache[symbol] = {
+          value: price,
+          timeOfRequest: Date.now()
+        };
         resolve(price);
       });
     })

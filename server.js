@@ -12,6 +12,11 @@ var apiRoutes         = require('./routes/api.js');
 var fccTestingRoutes  = require('./routes/fcctesting.js');
 var runner            = require('./test-runner');
 
+
+if (!process.env.CACHE_TIMEOUT || ! process.env.API_KEY || !process.env.DB) {
+  console.error('missing environment variables');
+  process.exit(1);
+}
 var app = express();
 
 app.use(helmet.contentSecurityPolicy({
